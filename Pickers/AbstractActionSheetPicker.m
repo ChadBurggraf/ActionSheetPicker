@@ -44,7 +44,6 @@
 - (void)configureAndPresentActionSheetForView:(UIView *)aView;
 - (void)presentActionSheet:(UIActionSheet *)actionSheet;
 - (void)presentPopover:(UIPopoverController *)popover;
-- (void)dismissPicker;
 - (BOOL)isViewPortrait;
 - (BOOL)isValidOrigin:(id)origin;
 - (id)storedOrigin;
@@ -102,7 +101,8 @@
     
     if ([self.pickerView respondsToSelector:@selector(setDataSource:)])
         [self.pickerView performSelector:@selector(setDataSource:) withObject:nil];
-    
+
+#if __has_feature(objc_arc) == 0
     self.actionSheet = nil;
     self.popOverController = nil;
     self.customButtons = nil;
@@ -112,6 +112,7 @@
     self.target = nil;
     
     [super dealloc];
+#endif
 }
 
 - (UIView *)configuredPickerView {
@@ -124,8 +125,12 @@
 }
 
 - (void)notifyTarget:(id)target didCancelWithAction:(SEL)cancelAction origin:(id)origin {
-    if (target && cancelAction && [target respondsToSelector:cancelAction])
+    if (target && cancelAction && [target respondsToSelector:cancelAction]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
         [target performSelector:cancelAction withObject:origin];
+#pragma clang diagnostic pop
+    }
 }
 
 #pragma mark - Actions
@@ -139,20 +144,22 @@
     NSAssert(_pickerView != NULL, @"Picker view failed to instantiate, perhaps you have invalid component data.");
     [masterView addSubview:_pickerView];
     [self presentPickerForView:masterView];
+#if __has_feature(objc_arc) == 0
     [masterView release];
+#endif
 }
 
 - (IBAction)actionPickerDone:(id)sender {
     [self notifyTarget:self.target didSucceedWithAction:self.successAction origin:[self storedOrigin]];    
-    [self dismissPicker];
+    [self dismissActionSheetPicker];
 }
 
 - (IBAction)actionPickerCancel:(id)sender {
     [self notifyTarget:self.target didCancelWithAction:self.cancelAction origin:[self storedOrigin]];
-    [self dismissPicker];
+    [self dismissActionSheetPicker];
 }
 
-- (void)dismissPicker {
+- (void)dismissActionSheetPicker {
 #if __IPHONE_4_1 <= __IPHONE_OS_VERSION_MAX_ALLOWED
     if (self.actionSheet)
 #else
@@ -177,7 +184,9 @@
         value = [NSNumber numberWithInt:0];
     NSDictionary *buttonDetails = [[NSDictionary alloc] initWithObjectsAndKeys:title, @"buttonTitle", value, @"buttonValue", nil];
     [self.customButtons addObject:buttonDetails];
+#if __has_feature(objc_arc) == 0
     [buttonDetails release];
+#endif
 }
 
 - (IBAction)customButtonPressed:(id)sender {
@@ -199,7 +208,11 @@
 
 - (UIToolbar *)createPickerToolbarWithTitle:(NSString *)title  {
     CGRect frame = CGRectMake(0, 0, self.viewSize.width, 44);
+#if __has_feature(objc_arc) == 0
     UIToolbar *pickerToolbar = [[[UIToolbar alloc] initWithFrame:frame] autorelease];
+#else
+    UIToolbar *pickerToolbar = [[UIToolbar alloc] initWithFrame:frame];
+#endif
     pickerToolbar.barStyle = UIBarStyleBlackOpaque;
     NSMutableArray *barItems = [[NSMutableArray alloc] init];
     NSInteger index = 0;
@@ -209,7 +222,9 @@
         UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithTitle:buttonTitle style:UIBarButtonItemStyleBordered target:self action:@selector(customButtonPressed:)];
         button.tag = index;
         [barItems addObject:button];
+#if __has_feature(objc_arc) == 0
         [button release];
+#endif
         index++;
     }
     if (NO == self.hideCancel) {
@@ -226,7 +241,9 @@
     UIBarButtonItem *doneButton = [self createButtonWithType:UIBarButtonSystemItemDone target:self action:@selector(actionPickerDone:)];
     [barItems addObject:doneButton];
     [pickerToolbar setItems:barItems animated:YES];
+#if __has_feature(objc_arc) == 0
     [barItems release];
+#endif
     return pickerToolbar;
 }
 
@@ -237,13 +254,21 @@
     [toolBarItemlabel setFont:[UIFont boldSystemFontOfSize:16]];    
     [toolBarItemlabel setBackgroundColor:[UIColor clearColor]];    
     toolBarItemlabel.text = aTitle;    
+#if __has_feature(objc_arc) == 0
     UIBarButtonItem *buttonLabel = [[[UIBarButtonItem alloc]initWithCustomView:toolBarItemlabel] autorelease];
     [toolBarItemlabel release];    
+#else
+    UIBarButtonItem *buttonLabel = [[UIBarButtonItem alloc] initWithCustomView:toolBarItemlabel];
+#endif
     return buttonLabel;
 }
 
 - (UIBarButtonItem *)createButtonWithType:(UIBarButtonSystemItem)type target:(id)target action:(SEL)buttonAction {
+#if __has_feature(objc_arc) == 0
     return [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:type target:target action:buttonAction] autorelease];
+#else
+    return [[UIBarButtonItem alloc] initWithBarButtonSystemItem:type target:target action:buttonAction];
+#endif
 }
 
 #pragma mark - Utilities and Accessors
@@ -310,7 +335,9 @@
     viewController.contentSizeForViewInPopover = viewController.view.frame.size;
     _popOverController = [[UIPopoverController alloc] initWithContentViewController:viewController];
     [self presentPopover:_popOverController];
+#if __has_feature(objc_arc) == 0
     [viewController release];
+#endif
 }
 
 - (void)presentPopover:(UIPopoverController *)popover {

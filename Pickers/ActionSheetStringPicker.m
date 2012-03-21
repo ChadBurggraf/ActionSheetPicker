@@ -41,7 +41,11 @@
 + (id)showPickerWithTitle:(NSString *)title rows:(NSArray *)strings initialSelection:(NSInteger)index doneBlock:(ActionStringDoneBlock)doneBlock cancelBlock:(ActionStringCancelBlock)cancelBlockOrNil origin:(id)origin {
     ActionSheetStringPicker * picker = [[ActionSheetStringPicker alloc] initWithTitle:title rows:strings initialSelection:index doneBlock:doneBlock cancelBlock:cancelBlockOrNil origin:origin];
     [picker showActionSheetPicker];
+#if __has_feature(objc_arc) == 0
     return [picker autorelease];
+#else
+    return picker;
+#endif
 }
 
 - (id)initWithTitle:(NSString *)title rows:(NSArray *)strings initialSelection:(NSInteger)index doneBlock:(ActionStringDoneBlock)doneBlock cancelBlock:(ActionStringCancelBlock)cancelBlockOrNil origin:(id)origin {
@@ -54,7 +58,11 @@
 }
 
 + (id)showPickerWithTitle:(NSString *)title rows:(NSArray *)data initialSelection:(NSInteger)index target:(id)target successAction:(SEL)successAction cancelAction:(SEL)cancelActionOrNil origin:(id)origin {
+#if __has_feature(objc_arc) == 0
     ActionSheetStringPicker *picker = [[[ActionSheetStringPicker alloc] initWithTitle:title rows:data initialSelection:index target:target successAction:successAction cancelAction:cancelActionOrNil origin:origin] autorelease];
+#else
+    ActionSheetStringPicker *picker = [[ActionSheetStringPicker alloc] initWithTitle:title rows:data initialSelection:index target:target successAction:successAction cancelAction:cancelActionOrNil origin:origin];
+#endif
     [picker showActionSheetPicker];
     return picker;
 }
@@ -70,19 +78,25 @@
 }
 
 - (void)dealloc {
+#if __has_feature(objc_arc) == 0
     self.data = nil;
     
     Block_release(_onActionSheetDone);
     Block_release(_onActionSheetCancel);
     
     [super dealloc];
+#endif
 }
 
 - (UIView *)configuredPickerView {
     if (!self.data)
         return nil;
     CGRect pickerFrame = CGRectMake(0, 40, self.viewSize.width, 216);
+#if __has_feature(objc_arc) == 0
     UIPickerView *stringPicker = [[[UIPickerView alloc] initWithFrame:pickerFrame] autorelease];
+#else
+    UIPickerView *stringPicker = [[UIPickerView alloc] initWithFrame:pickerFrame];
+#endif
     stringPicker.delegate = self;
     stringPicker.dataSource = self;
     stringPicker.showsSelectionIndicator = YES;
@@ -100,7 +114,10 @@
         return;
     }
     else if (target && [target respondsToSelector:successAction]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
         [target performSelector:successAction withObject:[NSNumber numberWithInt:self.selectedIndex] withObject:origin];
+#pragma clang diagnostic pop
         return;
     }
     NSLog(@"Invalid target/action ( %s / %s ) combination used for ActionSheetPicker", object_getClassName(target), (char *)successAction);
@@ -111,8 +128,12 @@
         _onActionSheetCancel(self);
         return;
     }
-    else if (target && cancelAction && [target respondsToSelector:cancelAction])
+    else if (target && cancelAction && [target respondsToSelector:cancelAction]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
         [target performSelector:cancelAction withObject:origin];
+#pragma clang diagnostic pop
+    }
 }
 
 #pragma mark - UIPickerViewDelegate / DataSource
@@ -142,19 +163,27 @@
     // NOTE: Sometimes see crashes when relying on just the copy property. Using Block_copy ensures correct behavior
 
 - (void)setOnActionSheetDone:(ActionStringDoneBlock)onActionSheetDone {
+#if __has_feature(objc_arc) == 0
     if (_onActionSheetDone) {
         Block_release(_onActionSheetDone);
         _onActionSheetDone = nil;
     }
     _onActionSheetDone = Block_copy(onActionSheetDone);
+#else
+    _onActionSheetDone = onActionSheetDone;
+#endif
 }
 
 - (void)setOnActionSheetCancel:(ActionStringCancelBlock)onActionSheetCancel {
+#if __has_feature(objc_arc) == 0
     if (_onActionSheetCancel) {
         Block_release(_onActionSheetCancel);
         _onActionSheetCancel = nil;
     }
     _onActionSheetCancel = Block_copy(onActionSheetCancel);
+#else
+    _onActionSheetCancel = onActionSheetCancel;
+#endif
 }
 
 @end

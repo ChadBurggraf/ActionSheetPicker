@@ -110,7 +110,11 @@
             BOOL addlabelView = NO;
             UILabel *label = (UILabel*)[self viewWithTag:component + 1];
             if(!label) {
+#if __has_feature(objc_arc) == 0
                 label = [[[UILabel alloc] initWithFrame:frame] autorelease];
+#else
+                label = [[UILabel alloc] initWithFrame:frame];
+#endif
                 addlabelView = YES;
             }
             
@@ -152,8 +156,10 @@
 }
 
 - (void)dealloc {
+#if __has_feature(objc_arc) == 0
     [labels release];
     [super dealloc];
+#endif
 }
 
 

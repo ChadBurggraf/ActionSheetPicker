@@ -52,7 +52,11 @@
 + (id)showPickerWithTitle:(NSString *)title bigUnitString:(NSString *)bigUnitString bigUnitMax:(NSInteger)bigUnitMax selectedBigUnit:(NSInteger)selectedBigUnit smallUnitString:(NSString*)smallUnitString smallUnitMax:(NSInteger)smallUnitMax selectedSmallUnit:(NSInteger)selectedSmallUnit target:(id)target action:(SEL)action origin:(id)origin {
    ActionSheetDistancePicker *picker = [[ActionSheetDistancePicker alloc] initWithTitle:title bigUnitString:bigUnitString bigUnitMax:bigUnitMax selectedBigUnit:selectedBigUnit smallUnitString:smallUnitString smallUnitMax:smallUnitMax selectedSmallUnit:selectedSmallUnit target:target action:action origin:origin];
     [picker showActionSheetPicker];
+#if __has_feature(objc_arc) == 0
     return [picker autorelease];
+#else
+    return picker;
+#endif
 }
 
 - (id)initWithTitle:(NSString *)title bigUnitString:(NSString *)bigUnitString bigUnitMax:(NSInteger)bigUnitMax selectedBigUnit:(NSInteger)selectedBigUnit smallUnitString:(NSString*)smallUnitString smallUnitMax:(NSInteger)smallUnitMax selectedSmallUnit:(NSInteger)selectedSmallUnit target:(id)target action:(SEL)action origin:(id)origin {
@@ -72,14 +76,20 @@
 }
 
 - (void)dealloc {
+#if __has_feature(objc_arc) == 0
     self.smallUnitString = nil;
     self.bigUnitString = nil;
     [super dealloc]; 
+#endif
 }
 
 - (UIView *)configuredPickerView {
     CGRect distancePickerFrame = CGRectMake(0, 40, self.viewSize.width, 216);
+#if __has_feature(objc_arc) == 0
     DistancePickerView *picker = [[[DistancePickerView alloc] initWithFrame:distancePickerFrame] autorelease];
+#else
+    DistancePickerView *picker = [[DistancePickerView alloc] initWithFrame:distancePickerFrame];
+#endif
     picker.delegate = self;
     picker.dataSource = self;
     picker.showsSelectionIndicator = YES;

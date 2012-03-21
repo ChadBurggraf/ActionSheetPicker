@@ -43,8 +43,10 @@
 	}
 	
 	newDate = [gregorian dateByAddingComponents:components toDate:self options:0];
+#if __has_feature(objc_arc) == 0
 	[components release];
 	[gregorian release];
+#endif
 	return newDate;
 }
 

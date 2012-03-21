@@ -55,10 +55,12 @@
 }
 
 - (void)dealloc {
+#if __has_feature(objc_arc) == 0
     self.animals = nil;
     self.selectedDate = nil;
     self.actionSheetPicker = nil;
     [super dealloc];
+#endif
 }
 
 - (void)viewDidUnload {

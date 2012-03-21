@@ -43,7 +43,11 @@
                  target:(id)target action:(SEL)action origin:(id)origin {
     ActionSheetDatePicker *picker = [[ActionSheetDatePicker alloc] initWithTitle:title datePickerMode:datePickerMode selectedDate:selectedDate target:target action:action origin:origin];
     [picker showActionSheetPicker];
+#if __has_feature(objc_arc) == 0
     return [picker autorelease];
+#else
+    return picker;
+#endif
 }
 
 - (id)initWithTitle:(NSString *)title datePickerMode:(UIDatePickerMode)datePickerMode selectedDate:(NSDate *)selectedDate target:(id)target action:(SEL)action origin:(id)origin {
@@ -57,13 +61,19 @@
 }
 
 - (void)dealloc {
+#if __has_feature(objc_arc) == 0
     self.selectedDate = nil;
     [super dealloc];
+#endif
 }
 
 - (UIView *)configuredPickerView {
     CGRect datePickerFrame = CGRectMake(0, 40, self.viewSize.width, 216);
+#if __has_feature(objc_arc) == 0
     UIDatePicker *datePicker = [[[UIDatePicker alloc] initWithFrame:datePickerFrame] autorelease];
+#else
+    UIDatePicker *datePicker = [[UIDatePicker alloc] initWithFrame:datePickerFrame];
+#endif
     datePicker.datePickerMode = self.datePickerMode;
     [datePicker setDate:self.selectedDate animated:NO];
     [datePicker addTarget:self action:@selector(eventForDatePicker:) forControlEvents:UIControlEventValueChanged];

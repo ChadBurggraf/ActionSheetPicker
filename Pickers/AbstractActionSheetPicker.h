@@ -42,6 +42,9 @@
     // Present the ActionSheetPicker
 - (void)showActionSheetPicker;
 
+    // Dismiss the ActionSheetPicker
+- (void)dismissActionSheetPicker;
+
     // For subclasses.  This is used to send a message to the target upon a successful selection and dismissal of the picker (i.e. not canceled).
 - (void)notifyTarget:(id)target didSucceedWithAction:(SEL)successAction origin:(id)origin;
 
